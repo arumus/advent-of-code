@@ -7,7 +7,6 @@ import arumus.advent21.Day4.*
 import arumus.advent21.Day5.*
 import arumus.advent21.Day6.*
 import arumus.advent21.Day7.*
-import arumus.advent21.Day8.*
 
 import scala.annotation.tailrec
 import scala.io.Source
