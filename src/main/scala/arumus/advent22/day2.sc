@@ -1,40 +1,35 @@
-val input = scala.io.Source.fromResource(s"advent22/day2.txt").getLines().toList
+val input =
+  scala.io.Source.fromResource(s"advent22/day2.txt").getLines().toList
 
 val strategy = input.map(x => x.split(" ")).map(x => (x.head, x.last))
-val score = Map("X" -> 1, "Y" -> 2, "Z" -> 3)
+
 val winScore = 6
 val looseScore = 0
 val drawScore = 3
+val score = Map("X" -> 1, "Y" -> 2, "Z" -> 3)
 
-def result1( oppChoice: String, yourChoice:String): Int =  (oppChoice, yourChoice) match {
-  case ("A", "Y") => winScore
-  case ("B", "Z") => winScore
-  case ("C", "X") => winScore
-  case ("A", "X") => drawScore
-  case ("B", "Y") => drawScore
-  case ("C", "Z") => drawScore
-  case _ => looseScore
-}
-val rount1 = strategy.foldLeft(0)((acc, x) => {
-  val (oppChoice, yourChoice) = x
-  acc + score(yourChoice) + result1(oppChoice, yourChoice)
-})
-
-val winingMove = Map("A" -> "Y", "B" -> "Z", "C" -> "X")
-val drawMove = Map("A" -> "X", "B" -> "Y", "C" -> "Z")
-val loosingMove = Map("A" -> "Z", "B" -> "X", "C" -> "Y")
-
-def result2(oppChoice:String, move:String): Int =  (move) match {
-  case ("X") => looseScore + score(loosingMove(oppChoice))
-  case ("Y") => drawScore + score(drawMove(oppChoice))
-  case ("Z") => winScore + score(winingMove(oppChoice))
-  case _ => 0
+def mapScore (app: String, my:String):Int = (app, my) match {
+  case ("A", "Y") => winScore + score(my)
+  case ("B", "Z") => winScore + score(my)
+  case ("C", "X") => winScore + score(my)
+  case ("A", "X") => drawScore + score(my)
+  case ("B", "Y") => drawScore + score(my)
+  case ("C", "Z") => drawScore + score(my)
+  case ("A", "Z") => looseScore + score(my)
+  case ("B", "X") => looseScore + score(my)
+  case ("C", "Y") => looseScore + score(my)
 }
 
-val rount2 = strategy.foldLeft(0)((acc, x) => {
-  val (oppChoice, move) = x
-  acc + result2(oppChoice, move)
-})
+val translate =
+  Map(
+    "X" -> Map("A" -> "Z", "B" -> "X", "C" -> "Y"), // Loose
+    "Y" -> Map("A" -> "X", "B" -> "Y", "C" -> "Z"), // Win
+    "Z" -> Map("A" -> "Y", "B" -> "Z", "C" -> "X") // Draw
+  )
 
+val round1 = strategy.collect(mapScore).sum
 
-
+val round2 = strategy
+  .map { (opp, action) =>(opp, translate(action)(opp))}
+  .map(mapScore)
+  .sum
