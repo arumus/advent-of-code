@@ -4,11 +4,11 @@ import scala.collection.mutable
 val allInput =
   scala.io.Source.fromResource(s"advent22/day5.txt").getLines().toList
 
-val cratesList = allInput
-  .takeWhile(_.contains("["))
-  .map(x => x.sliding(4, 4).map(_.charAt(1)).toList)
+def parseStacks = {
+  val cratesList = allInput
+    .takeWhile(_.contains("["))
+    .map(x => x.sliding(4, 4).map(_.charAt(1)).toList)
 
-def initializeStacks =
   SortedMap.from {
     for {
       c <- cratesList.head.indices
@@ -20,6 +20,7 @@ def initializeStacks =
       } yield ()
     } yield (c + 1).toString -> stack
   }
+}
 
 def parseMoves = {
   val movePattern = "move (\\d*) from (\\d?) to (\\d?)".r
@@ -32,7 +33,7 @@ def parseMoves = {
 val moves = parseMoves
 
 //Round 1
-val round1Stacks = initializeStacks
+val round1Stacks = parseStacks
 moves.foreach {
   case (numCrates, fromStack, toStack) =>
     (1 to numCrates).foreach(
@@ -42,7 +43,7 @@ moves.foreach {
 val round1 = round1Stacks.values.collect(_.top).mkString
 
 //Round 2
-val round2Stacks = initializeStacks
+val round2Stacks = parseStacks
 moves.foreach {
   case (numCrates, fromStack, toStack) => {
     (1 to numCrates)
