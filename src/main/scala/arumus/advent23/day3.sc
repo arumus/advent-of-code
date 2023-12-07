@@ -1,61 +1,70 @@
 import scala.:+
+import scala.Console.in
 import scala.annotation.tailrec
 import scala.util.matching.Regex
 
 val input =
   scala.io.Source
-    .fromResource(s"advent23/day2.txt")
+    .fromResource(s"advent23/day3.txt")
     .getLines()
     .filter(_.nonEmpty)
     .toList
 
+final case class Coord(row: Int, col: Int)
 
-final case class ColorCount(blue: Int, green: Int, red: Int)
-final case class Game(gameNo: Int, picks: List[ColorCount])
+//Parsed number and its starting index (col)
+def parseNumbers(row: Int, rowData: String): List[(Int, Coord)] =
+  "(\\d+)".r //numberPattern
+    .findAllMatchIn(rowData)
+    .map(x => (x.group(1).toInt, Coord(row, x.start)))
+    .toList
 
-//Game 3: 8 green, 6 blue, 20 red; 5 blue, 4 red, 13 green; 5 green, 1 red
-def mapGame(gameStr: String): Game = {
+def hasSpecialChar(at: Coord): Boolean =
+  !input(at.row).charAt(at.col).isDigit && input(at.row).charAt(at.col) != '.'
 
-  def parseColor(colorStr: String): (String, Int) = colorStr.trim match {
-    case s"$count $color" => (color, count.toInt)
+def hasStar(at: Coord): Boolean =
+  input(at.row).charAt(at.col) == '*'
+
+//Find coordinates of all special chars adjacent to a given coordinate
+def neighbours(at: Coord, charMatch: Coord => Boolean): List[Coord] = {
+  for {
+    rowIncrement <- List(-1, 0, 1)
+    colIncrement <- List(-1, 0, 1)
+    if !(rowIncrement == 0 && colIncrement == 0)
+  } yield Coord(at.row + rowIncrement, at.col + colIncrement)
+}.filter {
+    case Coord(row, col) =>
+      row >= 0 && row < input.length &&
+        col >= 0 && col < input(row).length
   }
+  .filter(charMatch)
 
-  def parseColors(colorsStr: String): Map[String, Int] =
-    colorsStr.split(",").map(parseColor).toMap
+def neighboursForNum(num: Int, at: Coord, charMatch: Coord => Boolean) =
+  (for {
+    c <- at.col until at.col + num.toString.length
+    matchedCoord <- neighbours(Coord(at.row, c), charMatch)
+  } yield (matchedCoord -> num)).distinct
 
-  def parsePicks(picksStr: String): List[Map[String, Int]] =
-    picksStr.split(";").map(parseColors).toList
+val result1 = (for {
+  row <- input.indices
+  dataRow = input(row)
+  numbersInRow = parseNumbers(row, dataRow)
+  rowSum = numbersInRow
+    .filter((num, at) => neighboursForNum(num, at, hasSpecialChar).nonEmpty)
+    .map(_._1)
+    .sum
+} yield rowSum).sum
 
-  System.out.println(gameStr)
-
-  gameStr match {
-    case s"Game $gameNo: $picksStr" =>
-      Game(gameNo.toInt, parsePicks(picksStr).map { x =>
-        ColorCount(
-          blue = x.getOrElse("blue", 0),
-          green = x.getOrElse("green", 0),
-          red = x.getOrElse("red", 0)
-        )
-      })
-  }
-
-}
-
-val games = input.map(mapGame).tapEach(println)
-val bag = ColorCount(red = 12, green = 13, blue = 14)
-
-val result1=games
-  .collect { case Game(id, picks) if picks.forall(
-      pick => pick.red <= bag.red && pick.green <= bag.green && pick.blue <= bag.blue
-    ) => id
-  }
+val result2 = (for {
+  row <- input.indices
+  dataRow = input(row)
+  numbersInRow = parseNumbers(row, dataRow)
+  gearWithNumbers <- numbersInRow.flatMap(
+    (num, at) => neighboursForNum(num, at, hasStar)
+  )
+} yield gearWithNumbers)
+  .groupBy { case (coord, _) => coord }
+  .collect { case (_, pairs) if pairs.length == 2 => pairs.map(_._2).product }
   .sum
 
-val result2=games
-  .map { game =>
-    val picks = game.picks
-    val red = picks.map(_.red).max
-    val green = picks.map(_.green).max
-    val blue = picks.map(_.blue).max
-    red * green * blue
-  }.sum
+

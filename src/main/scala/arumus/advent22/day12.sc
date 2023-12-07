@@ -1,93 +1,51 @@
+import scala.annotation.tailrec
 import scala.collection.mutable
-import scala.compiletime.ops.int
 
-val input =
-  scala.io.Source.fromResource(s"advent22/day11.txt").getLines().toList
+val input = scala.io.Source.fromResource(s"advent22/day12.txt").getLines().toList
+val heightGrid = input.map(_.toCharArray).map(_.toList)
 
-final case class Monkey(index: Int, items: List[Long], worryLevel: Long => Long, test: Long => Int, divisibleBy:Int, inspectedTimes: Long = 0)
+val rowsSize = heightGrid.size
+val colsSize =  heightGrid.head.size
 
-def extractMonkeyNo(str: String) =
-    str.trim match {case s"Monkey $monkeyNo:" => monkeyNo.toInt}
+val startWith = 'S'
+val endWith = 'E'
 
-def extractItems(str: String): List[Long] =
-  str.trim match {case s"Starting items: $items" => items.split(", ").map(_.trim.toLong).toList}
+case class Coord(row: Int, col: Int) {
+  def originalHeight: Char =
+    heightGrid(row)(col)
 
-def extractOperation(str: String): (Long => Long) =
-  old => str.trim match {
-      case s"Operation: new = old * old" => old * old
-      case s"Operation: new = old * $var1" => old * var1.trim.toInt
-      case s"Operation: new = old + old" => old + old
-      case s"Operation: new = old + $var1" => old + var1.trim.toInt
-  }
+  def height: Char =
+    heightGrid(row)(col) match
+      case `startWith` => 'a'
+      case `endWith` => 'z'
+      case height => height
 
-def extractDivisibleBy(str: String):Int =
-  str.trim match {case s"Test: divisible by $d" => d.toInt}
+  def neighbours: List[Coord] =
+     List(this.copy(col = col - 1), this.copy(col = col + 1), this.copy(row = row - 1), this.copy(row = row + 1))
+      .filter(x => x.col >= 0 && x.row >= 0 && x.col < colsSize && x.row < rowsSize)
+      .filter(x => (x.height - this.height) <= 1)
+}
 
-def extractTest(strArr: Seq[String]): (Long => Int) =
-  old => {
-    val divisibleBy = extractDivisibleBy(strArr.head)
-    val trueMonkey = strArr(1).trim match {case s"If true: throw to monkey $x" => x.trim.toInt}
-    val falseMoney = strArr(2).trim match {case s"If false: throw to monkey $x" => x.trim.toInt}
-    if (old % divisibleBy == 0) trueMonkey else falseMoney
-  }
+@tailrec
+def shortestPath(pending: List[(Coord, Int)], visited: Set[Coord] = Set.empty): Int = {
+  pending match
+    case Nil =>
+      Int.MaxValue
+    case (curr, distance) :: _ if curr.originalHeight == endWith =>
+      distance
+    case (curr, _) :: remaining if visited.contains(curr) =>
+      shortestPath(remaining, visited)
+    case (curr, distance) :: remaining =>
+      shortestPath(remaining ++ curr.neighbours.filterNot(visited.contains).map(x => (x, 1 + distance)), visited + curr)
+}
 
-val monkeys = input.iterator
-  .filter(_.nonEmpty)
-  .grouped(6)
-  .map { strArray =>
-    Monkey(
-      extractMonkeyNo(strArray.head),
-      extractItems(strArray(1)),
-      extractOperation(strArray(2)),
-      extractTest(strArray.takeRight(3)),
-      extractDivisibleBy(strArray(3))
-    )
-  }.toList
+def shortestPathFor(start:Char = startWith) =
+  for {
+    row <- 0 until rowsSize
+    col <- 0 until colsSize
+    if heightGrid(row)(col) == start
+  } yield shortestPath(List((Coord(row, col), 0)))
 
-monkeys.foreach(println)
+shortestPathFor('S').min
 
-def simulateMonkeys(monkeys: Array[Monkey], reduceFunc: Long => Long) =
-  monkeys.foreach { monkey =>
-    val items = monkey.items
-    monkeys(monkey.index) = monkey.copy(
-      items = List.empty,
-      inspectedTimes = monkey.inspectedTimes + items.size
-    )
-    items.foreach { item =>
-      val reducedWorryLevel = reduceFunc(monkey.worryLevel(item))
-      val tossToMonkeyId = monkey.test(reducedWorryLevel)
-      val tossToMonkey = monkeys(tossToMonkeyId)
-      monkeys(tossToMonkeyId) = tossToMonkey.copy(items = tossToMonkey.items :+ reducedWorryLevel)
-    }
-  }
-
-
-def runRound1 =
-  val monkeysArr = monkeys.toArray
-  (1 to 20).foreach { _ =>
-    simulateMonkeys(monkeysArr, _ / 3L)
-  }
-  monkeysArr.foreach(println)
-  monkeysArr
-    .map(_.inspectedTimes)
-    .sorted
-    .takeRight(2)
-    .product
-
-runRound1
-
-def runRound2 =
-  val monkeysArr = monkeys.toArray
-  val lcm= monkeys.map(_.divisibleBy).product
-  (1 to 10000).foreach { _ =>
-    simulateMonkeys(monkeysArr, _ % lcm)
-  }
-  monkeysArr.foreach(println)
-
-  monkeysArr
-    .map(_.inspectedTimes)
-    .sorted
-    .takeRight(2)
-    .product
-
-runRound2
+shortestPathFor('a').min

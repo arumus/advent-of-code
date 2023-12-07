@@ -1,12 +1,32 @@
-import scala.collection.immutable.{ListMap, SortedMap}
-import scala.collection.mutable
+import scala.collection.{SortedSet, mutable}
 
-val input =
-  scala.io.Source.fromResource(s"advent22/day6.txt").getLines().next()
+val input = scala.io.Source.fromResource(s"advent22/day7.txt").getLines()
 
-def findStart(windowSize: Int): Int =
-  input.toCharArray.sliding(windowSize).takeWhile(_.toSet.size < windowSize).size + windowSize
+val (dirSizes, _) = input.foldLeft(
+  mutable.SortedMap.empty[String, Long],
+  mutable.Stack.empty[String]
+) {
+  case ((entries, currPath), entry) =>
+    entry match {
+      case s"$$ cd .." => currPath.pop; (entries, currPath)
+      case s"$$ cd /"  => currPath.push("/"); (entries, currPath)
+      case s"$$ cd $dir" => currPath.push(currPath.top + dir + "/"); (entries, currPath)
+      case s"$$ ls"    => (entries, currPath)
+      case s"dir $dir" => (entries, currPath)
+      case s"$size $file" => (currPath.foldLeft(entries) {
+        case (allEntries, path) =>  allEntries += path -> ((entries.getOrElse(path, 0L) + size.toLong))
+      }, currPath)
+    }
+}
 
-val round1=findStart(4)
-val round2=findStart(14)
+dirSizes.foreach(x => println(x._1 + "=> " + x._2))
 
+val round1=dirSizes.collect {
+  case (x, size) if size < 100_000L => size
+}.sum
+
+val diff = dirSizes("/") - 40_000_000L
+
+val round2=dirSizes.collect {
+  case (x, size) if size >= diff => size
+}.min

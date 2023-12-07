@@ -4,10 +4,24 @@ object IteratorOps {
   implicit class GroupIterator[A](x: Iterator[A]) {
     def groupedBy(groupBy: A => Boolean): Iterator[List[A]] =
       new Iterator[List[A]] {
-        override def hasNext: Boolean = x.hasNext
+        private val buffer = new collection.mutable.ListBuffer[A]
+
+        override def hasNext: Boolean = buffer.nonEmpty || x.hasNext
+
         override def next(): List[A] = {
-          val result = x.takeWhile(groupBy).toList
-          if (x.hasNext) x.next()
+          while (x.hasNext) {
+            val next = x.next()
+            if (groupBy(next)) {
+              buffer += next
+            } else {
+              val result = buffer.toList
+              buffer.clear()
+              buffer += next
+              return result
+            }
+          }
+          val result = buffer.toList
+          buffer.clear()
           result
         }
       }

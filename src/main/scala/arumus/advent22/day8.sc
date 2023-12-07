@@ -1,32 +1,30 @@
-import scala.collection.{SortedSet, mutable}
+val input = scala.io.Source.fromResource(s"advent22/day8.txt").getLines()
+val grid = input.map(_.toCharArray.map(_ - '0').toList).toList
 
-val input = scala.io.Source.fromResource(s"advent22/day7.txt").getLines()
+val totalRows = grid.size
+val totalColumns = grid.head.size
 
-val (dirSizes, _) = input.foldLeft(
-  mutable.SortedMap.empty[String, Long],
-  mutable.Stack.empty[String]
-) {
-  case ((entries, currPath), entry) =>
-    entry match {
-      case s"$$ cd .." => currPath.pop; (entries, currPath)
-      case s"$$ cd /"  => currPath.push("/"); (entries, currPath)
-      case s"$$ cd $dir" => currPath.push(currPath.top + dir + "/"); (entries, currPath)
-      case s"$$ ls"    => (entries, currPath)
-      case s"dir $dir" => (entries, currPath)
-      case s"$size $file" => (currPath.foldLeft(entries) {
-        case (allEntries, path) =>  allEntries += path -> ((entries.getOrElse(path, 0L) + size.toLong))
-      }, currPath)
-    }
+val allCoords = for {
+  row <- grid.indices
+  col <- grid.head.indices
+} yield (row, col)
+
+def isTreeVisible(row: Int, col: Int): Boolean = {
+  (0 until col).forall(c => grid(row)(c) < grid(row)(col)) || //Left
+    (col + 1 until totalColumns)
+      .forall(c => grid(row)(c) < grid(row)(col)) || //Right
+    (0 until row).forall(r => grid(r)(col) < grid(row)(col)) || //Top
+    (row + 1 until totalRows)
+      .forall(r => grid(r)(col) < grid(row)(col)) //Bottom
 }
 
-dirSizes.foreach(x => println(x._1 + "=> " + x._2))
+val round1 = allCoords.count(isTreeVisible)
+def scenicScore(row: Int, col: Int): Int = {
+  val left = (col - 1 until 0 by -1).takeWhile(c => grid(row)(c) < grid(row)(col)).size + 1
+  val right = (col + 1 until totalColumns-1).takeWhile(c => grid(row)(c) < grid(row)(col)).size + 1
+  val up = (row - 1 until 0 by -1).takeWhile(r => grid(r)(col) < grid(row)(col)).size + 1
+  val down = (row + 1 until totalRows-1).takeWhile(r => grid(r)(col) < grid(row)(col)).size + 1
+  left * right * up * down
+}
 
-val round1=dirSizes.collect {
-  case (x, size) if size < 100_000L => size
-}.sum
-
-val diff = dirSizes("/") - 40_000_000L
-
-val round2=dirSizes.collect {
-  case (x, size) if size >= diff => size
-}.min
+val round2 = allCoords.map(scenicScore).max

@@ -1,67 +1,59 @@
 import scala.:+
 import scala.annotation.tailrec
-import scala.collection.immutable.Nil.tail
-import scala.collection.mutable.Map
 import scala.util.matching.Regex
 
 val input =
-  scala.io.Source.fromResource(s"advent23/day1.txt").getLines().toList
+  scala.io.Source
+    .fromResource(s"advent23/day2.txt")
+    .getLines()
+    .filter(_.nonEmpty)
+    .toList
 
-val numWords = List(
-  "zero",
-  "one",
-  "two",
-  "three",
-  "four",
-  "five",
-  "six",
-  "seven",
-  "eight",
-  "nine"
-)
+final case class ColorCount(blue: Int, green: Int, red: Int)
 
-val numWordsWithIndex = numWords.zipWithIndex
+final case class Game(gameNo: Int, picks: List[ColorCount])
 
-def transformAsNumber(line: String) = {
-  val numsOnly = line.filter(_.isDigit).map(_.asDigit)
-  s"${numsOnly.headOption.getOrElse(0)}${numsOnly.lastOption.getOrElse(0)}".toInt
+//Game 3: 8 green, 6 blue, 20 red; 5 blue, 4 red, 13 green; 5 green, 1 red
+def mapGame(gameStr: String): Game = {
+
+  def parseColor(colorStr: String): (String, Int) = colorStr.trim match {
+    case s"$count $color" => (color, count.toInt)
+  }
+
+  def parseColors(colorsStr: String): Map[String, Int] =
+    colorsStr.split(",").map(parseColor).toMap
+
+  def parsePicks(picksStr: String): List[Map[String, Int]] =
+    picksStr.split(";").map(parseColors).toList
+
+  gameStr match {
+    case s"Game $gameNo: $picksStr" =>
+      Game(gameNo.toInt, parsePicks(picksStr).map { x =>
+        ColorCount(
+          blue = x.getOrElse("blue", 0),
+          green = x.getOrElse("green", 0),
+          red = x.getOrElse("red", 0)
+        )
+      })
+  }
 }
 
-def transformWords(line: String) = {
+val games = input.map(mapGame).tapEach(println)
+val bag = ColorCount(red = 12, green = 13, blue = 14)
 
-  @tailrec
-  def replaceAtStart(
-    input: String,
-    words: List[(String, Int)] = numWordsWithIndex
-  ): String =
-    words match {
-      case Nil => input
-      case (word, index) :: tail =>
-        val result = input.replaceFirst(s"^${word}", index.toString)
-        if (result == input) replaceAtStart(input, tail)
-        else result
-    }
+val result1 = games.collect {
+  case Game(id, picks)
+      if picks.forall(
+        pick =>
+          pick.red <= bag.red && pick.green <= bag.green && pick.blue <= bag.blue
+      ) =>
+    id
+}.sum
 
-  @tailrec
-  def replaceWords(input: String,
-                   index: Int,
-                   inc: Int,
-                   cond: Int => Boolean): String =
-    if (!cond(index) || input.charAt(index).isDigit)
-      input
-    else {
-      val suffix = input.substring(index)
-      val replaced = replaceAtStart(suffix, numWordsWithIndex)
-      if (replaced == suffix) replaceWords(input, index + inc, inc, cond)
-      else input.substring(0, index) + replaced
-    }
-
-  val replacedFront = replaceWords(line, 0, 1, _ < line.length - 1)
-  replaceWords(replacedFront, replacedFront.length - 1, -1, _ > 0)
-}
-
-//Exercise 1
-input.map(transformAsNumber).sum
-
-//Exercise 2
-input.map(transformWords).map(transformAsNumber).sum
+val result2 = games.map { game =>
+  val picks = game.picks
+  val red = picks.map(_.red).max
+  val green = picks.map(_.green).max
+  val blue = picks.map(_.blue).max
+  red * green * blue
+}.sum
