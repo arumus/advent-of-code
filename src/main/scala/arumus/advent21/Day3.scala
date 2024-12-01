@@ -13,8 +13,8 @@ object Day3 {
       epsilonRate: String = "",
       pos: Int = 0
   ): (String, String, Int) =
-    if (pos == readings.head.length) (gammaRate, epsilonRate, pos)
-    else if (readings.count(_.charAt(pos) == '1') > round(readings.length / 2.0)) //cheated here by using map and sum.
+    if pos == readings.head.length then (gammaRate, epsilonRate, pos)
+    else if readings.count(_.charAt(pos) == '1') > round(readings.length / 2.0) then //cheated here by using map and sum.
       calculateRates(readings, gammaRate + "1", epsilonRate + "0", pos + 1)
     else
       calculateRates(readings, gammaRate + "0", epsilonRate + "1", pos + 1)
@@ -22,11 +22,11 @@ object Day3 {
   def calculateLifeSupport(readings: List[String]): Int = {
     @tailrec
     def findRatings(readings: List[String], bitPref: (Int, Int), pos: Int = 0): List[String] =
-      if (readings.length <= 1 || pos == readings.head.length) readings
+      if readings.length <= 1 || pos == readings.head.length then readings
       else
         findRatings(
           readings.filter {
-            _.charAt(pos) == (if (readings.count(_.charAt(pos) >= '1') >= round(readings.length / 2.0)) bitPref._1
+            _.charAt(pos) == (if readings.count(_.charAt(pos) >= '1') >= round(readings.length / 2.0) then bitPref._1
                               else bitPref._2)
           },
           bitPref,

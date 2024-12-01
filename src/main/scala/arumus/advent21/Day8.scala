@@ -27,10 +27,10 @@ object Day8 {
     signals
       .map(_.sorted)
       .map(x =>
-        if (x.length == 2) (x, Some(1))
-        else if (x.length == 4) (x, Some(4))
-        else if (x.length == 3) (x, Some(7))
-        else if (x.length == 7) (x, Some(8))
+        if x.length == 2 then (x, Some(1))
+        else if x.length == 4 then (x, Some(4))
+        else if x.length == 3 then (x, Some(7))
+        else if x.length == 7 then (x, Some(8))
         else (x, None)
       )
       .toMap

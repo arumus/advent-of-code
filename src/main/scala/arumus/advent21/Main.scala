@@ -78,7 +78,7 @@ object Main extends App {
 
     def readBoard(inputArr: List[String], id: Int): Day4.Board =
       Day4.Board(
-        for {
+        for
           strLine <- inputArr
             .map(_.trim)
             .dropWhile(_.isEmpty)
@@ -89,7 +89,7 @@ object Main extends App {
             .map(_.trim().toInt)
             .map(Day4.Box(_))
             .toList
-        } yield box,
+        yield box,
         id
       )
 
@@ -97,7 +97,7 @@ object Main extends App {
     def readBoards(inputArr: List[String],
                    acc: List[Day4.Board] = List.empty,
                    id: Int = 0): List[Day4.Board] =
-      if (inputArr.isEmpty) acc
+      if inputArr.isEmpty then acc
       else
         readBoards(
           inputArr.map(_.trim).dropWhile(_.isEmpty).dropWhile(_.nonEmpty),
@@ -110,7 +110,7 @@ object Main extends App {
       board.grid.foreach { r =>
         r.foreach { x =>
           val v = x.value
-          val m = if (x.marked) "✓" else "."
+          val m = if x.marked then "✓" else "."
           print(f"$v%2d$m%s ")
         }
         println

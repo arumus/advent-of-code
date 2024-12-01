@@ -8,11 +8,11 @@ object Day6 {
 
     @tailrec
     def loop(fishAgesGrouped: Seq[Long], currDay: Int): Long =
-      if (currDay == numberOfDays) fishAgesGrouped.sum
+      if currDay == numberOfDays then fishAgesGrouped.sum
       else
         loop(
           fishAgesGrouped.indices.foldLeft(Seq.fill(9)(0L)) { (ageGroup, age) =>
-            if (age == 0) ageGroup.updated(6, fishAgesGrouped(age)).updated(8, fishAgesGrouped(age))
+            if age == 0 then ageGroup.updated(6, fishAgesGrouped(age)).updated(8, fishAgesGrouped(age))
             else ageGroup.updated(age - 1, ageGroup(age - 1) + fishAgesGrouped(age))
           },
           currDay + 1

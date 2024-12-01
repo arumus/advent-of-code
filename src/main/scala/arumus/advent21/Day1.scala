@@ -14,7 +14,7 @@ object Day1Basic {
 
   @tailrec
   def windowSum(readings: Array[Int], start: Int, windowSize: Int = 1, curr: Int = 0, acc: Int = 0): Int =
-    if (start < 0 || (start + curr) >= readings.length || curr == windowSize) acc
+    if start < 0 || (start + curr) >= readings.length || curr == windowSize then acc
     else
       windowSum(
         readings,
@@ -26,22 +26,22 @@ object Day1Basic {
 
   @tailrec
   def countIncreasesByWindow2(readings: Array[Int], curr: Int = 1, acc: Int = 0): Int =
-    if (curr == readings.length) acc
+    if curr == readings.length then acc
     else
       countIncreasesByWindow2(
         readings,
         curr + 1,
-        if (windowSum(readings, curr) > windowSum(readings, curr - 1)) acc + 1 else acc
+        if windowSum(readings, curr) > windowSum(readings, curr - 1) then acc + 1 else acc
       )
 
   @tailrec
   def countIncreasesByWindow3(readings: Array[Int], curr: Int = 1, acc: Int = 0): Int =
-    if (curr == readings.length) acc
+    if curr == readings.length then acc
     else
       countIncreasesByWindow3(
         readings,
         curr + 1,
-        if (windowSum(readings, curr, 3) > windowSum(readings, curr - 1, 3)) acc + 1 else acc
+        if windowSum(readings, curr, 3) > windowSum(readings, curr - 1, 3) then acc + 1 else acc
       )
 
 }

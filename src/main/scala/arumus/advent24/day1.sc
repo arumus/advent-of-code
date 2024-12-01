@@ -5,8 +5,7 @@ import scala.collection.mutable.Map
 import scala.math.abs
 import scala.util.matching.Regex
 
-val input =
-  scala.io.Source.fromResource(s"advent24/day1.txt").getLines().toList
+val input = scala.io.Source.fromResource(s"advent24/day1.txt").getLines().toList
 
 val pattern = """(\d+)\s+(\d+)""".r
 

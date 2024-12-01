@@ -9,9 +9,9 @@ object IteratorOps {
         override def hasNext: Boolean = buffer.nonEmpty || x.hasNext
 
         override def next(): List[A] = {
-          while (x.hasNext) {
+          while x.hasNext do {
             val next = x.next()
-            if (groupBy(next)) {
+            if groupBy(next) then {
               buffer += next
             } else {
               val result = buffer.toList
